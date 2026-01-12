@@ -1,0 +1,9 @@
+Transaction ID,Amount (INR),Source Currency,Target Currency,Merchant Name,FX Rate
+PAY-BULK-001,150000,INR,USD,TechCorp Inc,0.012
+PAY-BULK-002,250000,INR,EUR,Global Trade Ltd,0.011
+PAY-BULK-003,85000,INR,GBP,Euro Imports,0.0095
+PAY-BULK-004,320000,INR,JPY,Quick Pay Services,1.78
+PAY-BULK-005,175000,INR,CAD,North Bay Exports,0.016
+PAY-BULK-006,95000,INR,AUD,Melbourne Traders,0.0184
+PAY-BULK-007,420000,INR,SGD,Singapore Hub,0.0161
+PAY-BULK-008,185000,INR,CHF,Swiss Partners,0.0106

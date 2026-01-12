@@ -20,7 +20,7 @@ const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 /**
  * Fetch rates from external API
  */
-export const fetchRatesFromAPI = async (baseCurrency = 'usd') => {
+export const fetchRatesFromAPI = async (baseCurrency = 'inr') => {
   const baseUrl = process.env.FX_API_BASE_URL || 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api';
   const date = 'latest';
   const apiVersion = 'v1';
@@ -275,7 +275,7 @@ export const convertCurrency = async (amount, fromCurrency, toCurrency) => {
 /**
  * Get all current rates for a base currency
  */
-export const getAllRates = async (baseCurrency = 'USD') => {
+export const getAllRates = async (baseCurrency = 'INR') => {
   const rates = await ExchangeRate.find({
     baseCurrency: baseCurrency.toUpperCase(),
     status: 'active'
@@ -302,7 +302,7 @@ export const getAllRates = async (baseCurrency = 'USD') => {
  */
 export const refreshAllRates = async () => {
   const results = [];
-  const baseCurrencies = ['USD', 'EUR', 'GBP'];
+  const baseCurrencies = ['INR', 'USD', 'EUR', 'GBP'];
   
   for (const base of baseCurrencies) {
     const apiResult = await fetchRatesFromAPI(base);

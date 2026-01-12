@@ -1,7 +1,19 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Zap, Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { Zap, Eye, EyeOff, ArrowRight, Shield, Building2 } from 'lucide-react'
 import { useAuth } from '../App'
+
+// Demo users - Admin and 3 Merchants
+const DEMO_USERS = [
+  { id: 'admin-001', email: 'admin@payflow.com', password: 'Admin123!', role: 'admin', firstName: 'Admin', lastName: 'User', merchantId: null },
+  { id: 'mer-001', email: 'techcorp@payflow.com', password: 'Merchant1!', role: 'merchant', firstName: 'TechCorp', lastName: 'Inc', merchantId: 'MER-001', merchantName: 'TechCorp Inc' },
+  { id: 'mer-002', email: 'globaltrade@payflow.com', password: 'Merchant2!', role: 'merchant', firstName: 'Global', lastName: 'Trade', merchantId: 'MER-002', merchantName: 'Global Trade Ltd' },
+  { id: 'mer-003', email: 'euroimports@payflow.com', password: 'Merchant3!', role: 'merchant', firstName: 'Euro', lastName: 'Imports', merchantId: 'MER-003', merchantName: 'Euro Imports' },
+  { id: 'mer-004', email: 'quickpay@payflow.com', password: 'Merchant4!', role: 'merchant', firstName: 'Quick', lastName: 'Pay', merchantId: 'MER-004', merchantName: 'Quick Pay Services' },
+  { id: 'mer-005', email: 'northbay@payflow.com', password: 'Merchant5!', role: 'merchant', firstName: 'North', lastName: 'Bay', merchantId: 'MER-005', merchantName: 'North Bay Exports' },
+]
+
+export { DEMO_USERS }
 
 export default function Login() {
   const { login } = useAuth()
@@ -16,6 +28,23 @@ export default function Login() {
     setLoading(true)
     setError('')
 
+    // Check demo users first
+    const demoUser = DEMO_USERS.find(u => u.email === form.email && u.password === form.password)
+    
+    if (demoUser) {
+      login({
+        _id: demoUser.id,
+        email: demoUser.email,
+        firstName: demoUser.firstName,
+        lastName: demoUser.lastName,
+        role: demoUser.role,
+        merchantId: demoUser.merchantId,
+        merchantName: demoUser.merchantName
+      }, 'demo-token')
+      setLoading(false)
+      return
+    }
+
     try {
       const endpoint = isLogin ? '/api/v1/auth/login' : '/api/v1/auth/register'
       const res = await fetch(endpoint, {
@@ -28,17 +57,10 @@ export default function Login() {
       if (res.ok) {
         login(data.user, data.accessToken)
       } else {
-        setError(data.error || 'Authentication failed')
+        setError(data.error || 'Invalid email or password')
       }
     } catch {
-      // Demo mode - allow login with any credentials
-      login({
-        _id: 'demo',
-        email: form.email || 'demo@example.com',
-        firstName: form.firstName || 'Demo',
-        lastName: form.lastName || 'User',
-        role: 'admin'
-      }, 'demo-token')
+      setError('Invalid email or password. Use demo credentials below.')
     } finally {
       setLoading(false)
     }
@@ -155,9 +177,57 @@ export default function Login() {
           </button>
         </p>
 
-        <p className="text-center mt-4 text-xs text-gray-500">
-          Demo mode: Any credentials will work
-        </p>
+        {/* Demo Credentials Box */}
+        <div className="mt-6 p-4 bg-gradient-to-r from-primary-500/10 to-accent-500/10 border border-primary-500/30 rounded-xl">
+          <p className="text-sm font-medium text-center mb-3 text-primary-300">🔐 Demo Login Credentials</p>
+          
+          {/* Admin */}
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Shield className="w-4 h-4 text-amber-400" />
+              <span className="text-xs font-semibold text-amber-400">ADMIN</span>
+            </div>
+            <div className="bg-white/5 px-3 py-2 rounded-lg text-xs font-mono">
+              <div className="flex justify-between"><span className="text-gray-400">Email:</span><span className="text-amber-300">admin@payflow.com</span></div>
+              <div className="flex justify-between mt-1"><span className="text-gray-400">Pass:</span><span className="text-amber-300">Admin123!</span></div>
+            </div>
+          </div>
+          
+          {/* Merchants */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Building2 className="w-4 h-4 text-accent-400" />
+              <span className="text-xs font-semibold text-accent-400">MERCHANTS</span>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="bg-white/5 px-3 py-2 rounded-lg font-mono">
+                <div className="text-gray-300 font-semibold mb-1">TechCorp Inc (MER-001)</div>
+                <div className="flex justify-between"><span className="text-gray-400">Email:</span><span className="text-accent-300">techcorp@payflow.com</span></div>
+                <div className="flex justify-between"><span className="text-gray-400">Pass:</span><span className="text-accent-300">Merchant1!</span></div>
+              </div>
+              <div className="bg-white/5 px-3 py-2 rounded-lg font-mono">
+                <div className="text-gray-300 font-semibold mb-1">Global Trade Ltd (MER-002)</div>
+                <div className="flex justify-between"><span className="text-gray-400">Email:</span><span className="text-accent-300">globaltrade@payflow.com</span></div>
+                <div className="flex justify-between"><span className="text-gray-400">Pass:</span><span className="text-accent-300">Merchant2!</span></div>
+              </div>
+              <div className="bg-white/5 px-3 py-2 rounded-lg font-mono">
+                <div className="text-gray-300 font-semibold mb-1">Euro Imports (MER-003)</div>
+                <div className="flex justify-between"><span className="text-gray-400">Email:</span><span className="text-accent-300">euroimports@payflow.com</span></div>
+                <div className="flex justify-between"><span className="text-gray-400">Pass:</span><span className="text-accent-300">Merchant3!</span></div>
+              </div>
+              <div className="bg-white/5 px-3 py-2 rounded-lg font-mono">
+                <div className="text-gray-300 font-semibold mb-1">Quick Pay Services (MER-004)</div>
+                <div className="flex justify-between"><span className="text-gray-400">Email:</span><span className="text-accent-300">quickpay@payflow.com</span></div>
+                <div className="flex justify-between"><span className="text-gray-400">Pass:</span><span className="text-accent-300">Merchant4!</span></div>
+              </div>
+              <div className="bg-white/5 px-3 py-2 rounded-lg font-mono">
+                <div className="text-gray-300 font-semibold mb-1">North Bay Exports (MER-005)</div>
+                <div className="flex justify-between"><span className="text-gray-400">Email:</span><span className="text-accent-300">northbay@payflow.com</span></div>
+                <div className="flex justify-between"><span className="text-gray-400">Pass:</span><span className="text-accent-300">Merchant5!</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </motion.div>
     </div>
   )

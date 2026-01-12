@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { TrendingUp, DollarSign, CreditCard, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { TrendingUp, DollarSign, CreditCard, Users, ArrowUpRight, ArrowDownRight, RefreshCw } from 'lucide-react'
 import CurrencyBoard from '../components/CurrencyBoard'
 import TransactionFlow from '../components/TransactionFlow'
 
@@ -38,8 +38,10 @@ export default function Dashboard() {
   })
   const [chartData, setChartData] = useState([])
   const [pieData, setPieData] = useState([])
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
+  const loadData = () => {
+    setRefreshing(true)
     // Mock data for demo
     setStats({
       totalPayments: 12847,
@@ -57,12 +59,17 @@ export default function Dashboard() {
     setChartData(data)
 
     setPieData([
-      { name: 'USD', value: 45 },
-      { name: 'EUR', value: 25 },
-      { name: 'GBP', value: 15 },
-      { name: 'JPY', value: 10 },
+      { name: 'INR', value: 45 },
+      { name: 'USD', value: 25 },
+      { name: 'EUR', value: 15 },
+      { name: 'GBP', value: 10 },
       { name: 'Other', value: 5 }
     ])
+    setTimeout(() => setRefreshing(false), 500)
+  }
+
+  useEffect(() => {
+    loadData()
   }, [])
 
   return (
@@ -73,9 +80,19 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-gray-400">Welcome back! Here's your payment overview.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="status-dot status-active"></div>
-          <span className="text-sm text-gray-400">All systems operational</span>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={loadData}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-500/20 hover:bg-primary-500/30 border border-primary-500/30 rounded-xl transition-all disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="status-dot status-active"></div>
+            <span className="text-sm text-gray-400">All systems operational</span>
+          </div>
         </div>
       </div>
 
@@ -90,7 +107,7 @@ export default function Dashboard() {
         />
         <StatCard
           title="Total Volume"
-          value={`$${(stats.volume / 1000000).toFixed(2)}M`}
+          value={`₹${(stats.volume / 10000000).toFixed(2)}Cr`}
           change={8.3}
           icon={DollarSign}
           color="from-accent-500 to-accent-700"
@@ -129,7 +146,7 @@ export default function Dashboard() {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-              <YAxis stroke="#64748b" fontSize={12} tickFormatter={(v) => `$${v/1000}k`} />
+              <YAxis stroke="#64748b" fontSize={12} tickFormatter={(v) => `₹${v/1000}k`} />
               <Tooltip
                 contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
                 labelStyle={{ color: '#e2e8f0' }}

@@ -57,7 +57,7 @@ export const createSettlementBatch = async (merchantId, dateRange, actor) => {
     grossAmount: Math.round(grossAmount * 100) / 100,
     totalFees: Math.round(totalFees * 100) / 100,
     netAmount: Math.round(netAmount * 100) / 100,
-    currency: merchant.defaultCurrency || 'USD',
+    currency: merchant.defaultCurrency || 'INR',
     transactionCount: payments.length,
     successfulTransactions: payments.filter(p => p.status === 'completed').length,
     failedTransactions: 0,

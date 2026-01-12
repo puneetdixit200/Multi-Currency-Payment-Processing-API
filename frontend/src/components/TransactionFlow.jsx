@@ -1,110 +1,140 @@
-import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, Sphere, MeshDistortMaterial } from '@react-three/drei'
-import { useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowRight, Check, Clock, AlertCircle, RefreshCw } from 'lucide-react'
 
-function AnimatedSphere() {
-  const meshRef = useRef()
-  
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.x = state.clock.elapsedTime * 0.2
-      meshRef.current.rotation.y = state.clock.elapsedTime * 0.3
-    }
-  })
+const mockTransactions = [
+  { id: 'TXN-001', from: 'INR', to: 'USD', amount: 416500, status: 'completed', time: '2 min ago' },
+  { id: 'TXN-002', from: 'INR', to: 'EUR', amount: 266650, status: 'processing', time: '5 min ago' },
+  { id: 'TXN-003', from: 'INR', to: 'GBP', amount: 124875, status: 'completed', time: '10 min ago' },
+  { id: 'TXN-004', from: 'INR', to: 'JPY', amount: 666400, status: 'pending', time: '15 min ago' },
+  { id: 'TXN-005', from: 'INR', to: 'CAD', amount: 174930, status: 'completed', time: '20 min ago' },
+]
 
-  return (
-    <Sphere ref={meshRef} args={[1, 64, 64]} scale={2}>
-      <MeshDistortMaterial
-        color="#6366f1"
-        attach="material"
-        distort={0.3}
-        speed={2}
-        roughness={0.2}
-        metalness={0.8}
-      />
-    </Sphere>
-  )
+const StatusIcon = ({ status }) => {
+  switch (status) {
+    case 'completed':
+      return <Check className="w-4 h-4 text-green-400" />
+    case 'processing':
+      return <RefreshCw className="w-4 h-4 text-blue-400 animate-spin" />
+    case 'pending':
+      return <Clock className="w-4 h-4 text-yellow-400" />
+    default:
+      return <AlertCircle className="w-4 h-4 text-red-400" />
+  }
 }
 
-function FlowingParticles() {
-  const count = 50
-  const particles = useRef()
-  
-  useFrame((state) => {
-    if (particles.current) {
-      particles.current.rotation.y = state.clock.elapsedTime * 0.1
-    }
-  })
+export default function TransactionFlow() {
+  const [transactions, setTransactions] = useState(mockTransactions)
+  const [isPaused, setIsPaused] = useState(false)
 
-  const positions = new Float32Array(count * 3)
-  for (let i = 0; i < count; i++) {
-    positions[i * 3] = (Math.random() - 0.5) * 10
-    positions[i * 3 + 1] = (Math.random() - 0.5) * 10
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 10
+  useEffect(() => {
+    if (isPaused) return
+    
+    const interval = setInterval(() => {
+      // Simulate processing transactions
+      setTransactions(prev => prev.map(txn => {
+        if (txn.status === 'processing') {
+          return { ...txn, status: 'completed' }
+        }
+        if (txn.status === 'pending' && Math.random() > 0.7) {
+          return { ...txn, status: 'processing' }
+        }
+        return txn
+      }))
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [isPaused])
+
+  const handleRetry = (id) => {
+    setTransactions(prev => prev.map(txn => 
+      txn.id === id ? { ...txn, status: 'processing' } : txn
+    ))
+  }
+
+  const handleTogglePause = () => {
+    setIsPaused(!isPaused)
+  }
+
+  const statusColors = {
+    completed: 'border-green-500/30 bg-green-500/10',
+    processing: 'border-blue-500/30 bg-blue-500/10',
+    pending: 'border-yellow-500/30 bg-yellow-500/10',
+    failed: 'border-red-500/30 bg-red-500/10'
   }
 
   return (
-    <points ref={particles}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={count} array={positions} itemSize={3} />
-      </bufferGeometry>
-      <pointsMaterial size={0.05} color="#34d399" transparent opacity={0.8} />
-    </points>
-  )
-}
-
-export default function TransactionFlow({ transactions = [] }) {
-  const [hoveredTx, setHoveredTx] = useState(null)
-
-  return (
-    <div className="glass-card p-6 h-[400px] relative overflow-hidden">
-      <div className="absolute inset-0 z-0">
-        <Canvas camera={{ position: [0, 0, 5] }}>
-          <ambientLight intensity={0.5} />
-          <pointLight position={[10, 10, 10]} intensity={1} />
-          <AnimatedSphere />
-          <FlowingParticles />
-          <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.5} />
-        </Canvas>
+    <div className="glass-card p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-bold">Live Transaction Flow</h2>
+          <p className="text-sm text-gray-400">Real-time currency conversions</p>
+        </div>
+        <button
+          onClick={handleTogglePause}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
+            isPaused 
+              ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+              : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+          }`}
+        >
+          {isPaused ? 'Resume' : 'Pause'} Updates
+        </button>
       </div>
 
-      <div className="relative z-10">
-        <h2 className="text-xl font-bold mb-4">Transaction Flow</h2>
-        
-        <div className="space-y-3 mt-6">
-          {(transactions.length > 0 ? transactions : [
-            { id: 1, from: 'USD', to: 'EUR', amount: 5000, status: 'completed' },
-            { id: 2, from: 'GBP', to: 'JPY', amount: 3200, status: 'processing' },
-            { id: 3, from: 'EUR', to: 'USD', amount: 8500, status: 'completed' },
-          ]).slice(0, 3).map((tx, idx) => (
+      <div className="space-y-3">
+        <AnimatePresence>
+          {transactions.map((txn, idx) => (
             <motion.div
-              key={tx.id}
+              key={txn.id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
               transition={{ delay: idx * 0.1 }}
-              onHoverStart={() => setHoveredTx(tx.id)}
-              onHoverEnd={() => setHoveredTx(null)}
-              className="flex items-center gap-4 p-3 rounded-xl bg-black/30 backdrop-blur-sm border border-white/10 hover:border-primary-500/50 transition-all"
+              className={`flex items-center justify-between p-4 rounded-xl border ${statusColors[txn.status]} transition-all hover:scale-[1.01]`}
             >
-              <div className="flex items-center gap-2 flex-1">
-                <span className="font-bold text-primary-400">{tx.from}</span>
-                <motion.div
-                  animate={{ x: hoveredTx === tx.id ? [0, 5, 0] : 0 }}
-                  transition={{ repeat: Infinity, duration: 0.5 }}
-                  className="text-gray-500"
-                >→</motion.div>
-                <span className="font-bold text-accent-400">{tx.to}</span>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <StatusIcon status={txn.status} />
+                  <span className="font-mono text-sm text-gray-400">{txn.id}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-bold">{txn.from}</span>
+                  <ArrowRight className="w-4 h-4 text-gray-500" />
+                  <span className="font-bold">{txn.to}</span>
+                </div>
+                <span className="text-lg font-semibold">₹{txn.amount.toLocaleString('en-IN')}</span>
               </div>
-              <span className="font-mono font-semibold">${tx.amount.toLocaleString()}</span>
-              <span className={`px-2 py-1 rounded-full text-xs ${
-                tx.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
-              }`}>
-                {tx.status}
-              </span>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-500">{txn.time}</span>
+                {txn.status === 'pending' && (
+                  <button
+                    onClick={() => handleRetry(txn.id)}
+                    className="px-3 py-1 bg-primary-500/20 hover:bg-primary-500/30 text-primary-300 rounded-lg text-sm transition-colors"
+                  >
+                    Process
+                  </button>
+                )}
+                {txn.status === 'failed' && (
+                  <button
+                    onClick={() => handleRetry(txn.id)}
+                    className="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm transition-colors"
+                  >
+                    Retry
+                  </button>
+                )}
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  txn.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                  txn.status === 'processing' ? 'bg-blue-500/20 text-blue-400' :
+                  txn.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                  'bg-red-500/20 text-red-400'
+                }`}>
+                  {txn.status.charAt(0).toUpperCase() + txn.status.slice(1)}
+                </span>
+              </div>
             </motion.div>
           ))}
-        </div>
+        </AnimatePresence>
       </div>
     </div>
   )

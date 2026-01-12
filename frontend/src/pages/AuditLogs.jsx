@@ -1,122 +1,248 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Filter, AlertCircle, Info, AlertTriangle, Shield } from 'lucide-react'
-import { useAuth } from '../App'
+import { FileText, Search, Filter, Download, Calendar, User, Activity, AlertCircle, Check, Info } from 'lucide-react'
 
-const severityConfig = {
-  info: { icon: Info, color: 'text-blue-400', bg: 'bg-blue-500/20' },
-  warning: { icon: AlertTriangle, color: 'text-yellow-400', bg: 'bg-yellow-500/20' },
-  error: { icon: AlertCircle, color: 'text-red-400', bg: 'bg-red-500/20' },
-  critical: { icon: Shield, color: 'text-red-500', bg: 'bg-red-600/20' }
+const mockLogs = [
+  { id: 1, action: 'payment.created', user: 'admin@payflow.com', details: 'Payment PAY-001 created for $1,250.00', timestamp: '2024-01-10 14:32:15', level: 'info' },
+  { id: 2, action: 'merchant.updated', user: 'admin@payflow.com', details: 'Merchant MER-002 status changed to active', timestamp: '2024-01-10 14:28:00', level: 'info' },
+  { id: 3, action: 'settlement.processed', user: 'system', details: 'Settlement SET-001 completed for $45,250.00', timestamp: '2024-01-10 14:15:30', level: 'success' },
+  { id: 4, action: 'auth.login', user: 'admin@payflow.com', details: 'User logged in successfully', timestamp: '2024-01-10 14:00:00', level: 'info' },
+  { id: 5, action: 'payment.failed', user: 'system', details: 'Payment PAY-004 failed: Insufficient funds', timestamp: '2024-01-09 16:45:00', level: 'error' },
+  { id: 6, action: 'fx.rate_update', user: 'system', details: 'Exchange rates updated for 10 currency pairs', timestamp: '2024-01-09 12:00:00', level: 'info' },
+  { id: 7, action: 'merchant.created', user: 'admin@payflow.com', details: 'New merchant MER-005 registered', timestamp: '2024-01-08 10:30:00', level: 'success' },
+  { id: 8, action: 'auth.logout', user: 'admin@payflow.com', details: 'User logged out', timestamp: '2024-01-08 18:00:00', level: 'info' },
+]
+
+const LevelBadge = ({ level }) => {
+  const styles = {
+    info: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    success: 'bg-green-500/20 text-green-400 border-green-500/30',
+    warning: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+    error: 'bg-red-500/20 text-red-400 border-red-500/30'
+  }
+  const icons = { info: Info, success: Check, warning: AlertCircle, error: AlertCircle }
+  const Icon = icons[level]
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm border ${styles[level]}`}>
+      <Icon className="w-3.5 h-3.5" />
+      {level.charAt(0).toUpperCase() + level.slice(1)}
+    </span>
+  )
 }
 
 export default function AuditLogs() {
-  const { token } = useAuth()
-  const [logs, setLogs] = useState([])
-  const [filters, setFilters] = useState({ category: '', severity: '', search: '' })
-
-  useEffect(() => {
-    fetchLogs()
-  }, [])
-
-  const fetchLogs = async () => {
-    try {
-      const res = await fetch('/api/v1/audit-logs', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      const data = await res.json()
-      setLogs(data.logs || [])
-    } catch {
-      setLogs([
-        { _id: '1', action: 'payment_created', category: 'payment', severity: 'info', actor: { email: 'admin@example.com' }, timestamp: new Date().toISOString() },
-        { _id: '2', action: 'user_login', category: 'auth', severity: 'info', actor: { email: 'merchant@example.com' }, timestamp: new Date(Date.now() - 3600000).toISOString() },
-        { _id: '3', action: 'login_failed', category: 'auth', severity: 'warning', actor: { email: 'unknown@test.com' }, timestamp: new Date(Date.now() - 7200000).toISOString() },
-        { _id: '4', action: 'settlement_created', category: 'settlement', severity: 'info', actor: { email: 'manager@example.com' }, timestamp: new Date(Date.now() - 10800000).toISOString() },
-        { _id: '5', action: 'fraud_alert', category: 'payment', severity: 'critical', actor: { email: 'system' }, timestamp: new Date(Date.now() - 14400000).toISOString() },
-      ])
-    }
-  }
+  const [logs, setLogs] = useState(mockLogs)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterLevel, setFilterLevel] = useState('all')
+  const [filterAction, setFilterAction] = useState('all')
 
   const filteredLogs = logs.filter(log => {
-    if (filters.category && log.category !== filters.category) return false
-    if (filters.severity && log.severity !== filters.severity) return false
-    if (filters.search && !log.action.toLowerCase().includes(filters.search.toLowerCase())) return false
-    return true
+    const matchesSearch = log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         log.details.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         log.user.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesLevel = filterLevel === 'all' || log.level === filterLevel
+    const matchesAction = filterAction === 'all' || log.action.startsWith(filterAction)
+    return matchesSearch && matchesLevel && matchesAction
   })
+
+  const actionTypes = ['all', 'payment', 'merchant', 'settlement', 'auth', 'fx']
+
+  const handleExport = () => {
+    const csv = ['ID,Action,User,Details,Timestamp,Level']
+    filteredLogs.forEach(log => {
+      csv.push(`${log.id},${log.action},"${log.user}","${log.details}",${log.timestamp},${log.level}`)
+    })
+    const blob = new Blob([csv.join('\n')], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'audit_logs.csv'
+    a.click()
+  }
+
+  const handleClearFilters = () => {
+    setSearchQuery('')
+    setFilterLevel('all')
+    setFilterAction('all')
+  }
+
+  const handleRefresh = () => {
+    // Simulate refresh by adding a new log entry
+    const newLog = {
+      id: logs.length + 1,
+      action: 'system.refresh',
+      user: 'admin@payflow.com',
+      details: 'Audit logs refreshed',
+      timestamp: new Date().toLocaleString('sv-SE').replace('T', ' '),
+      level: 'info'
+    }
+    setLogs([newLog, ...logs])
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Audit Logs</h1>
-        <p className="text-gray-400">Compliance-grade activity tracking</p>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Audit Logs</h1>
+          <p className="text-gray-400">Track all system activities and changes</p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={handleRefresh}
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
+          >
+            <Activity className="w-4 h-4" />
+            Refresh
+          </button>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="glass-card p-4 flex flex-wrap gap-4">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search actions..."
-            value={filters.search}
-            onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
-            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl focus:border-primary-500 focus:outline-none"
-          />
+      <div className="glass-card p-4 space-y-4">
+        <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex-1 min-w-64 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search logs..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl focus:border-primary-500 focus:outline-none transition-colors"
+            />
+          </div>
+          <button
+            onClick={handleClearFilters}
+            className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
+          >
+            Clear Filters
+          </button>
         </div>
-        <select
-          value={filters.category}
-          onChange={(e) => setFilters(f => ({ ...f, category: e.target.value }))}
-          className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl"
-        >
-          <option value="">All Categories</option>
-          <option value="auth">Auth</option>
-          <option value="payment">Payment</option>
-          <option value="merchant">Merchant</option>
-          <option value="settlement">Settlement</option>
-        </select>
-        <select
-          value={filters.severity}
-          onChange={(e) => setFilters(f => ({ ...f, severity: e.target.value }))}
-          className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl"
-        >
-          <option value="">All Severity</option>
-          <option value="info">Info</option>
-          <option value="warning">Warning</option>
-          <option value="error">Error</option>
-          <option value="critical">Critical</option>
-        </select>
+        <div className="flex flex-wrap gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">Level:</span>
+            <div className="flex gap-2">
+              {['all', 'info', 'success', 'warning', 'error'].map(level => (
+                <button
+                  key={level}
+                  onClick={() => setFilterLevel(level)}
+                  className={`px-3 py-1 rounded-lg text-sm transition-all ${
+                    filterLevel === level
+                      ? 'bg-primary-500/30 text-primary-300 border border-primary-500/50'
+                      : 'bg-white/5 hover:bg-white/10 border border-white/10'
+                  }`}
+                >
+                  {level.charAt(0).toUpperCase() + level.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">Action:</span>
+            <div className="flex gap-2">
+              {actionTypes.map(action => (
+                <button
+                  key={action}
+                  onClick={() => setFilterAction(action)}
+                  className={`px-3 py-1 rounded-lg text-sm transition-all ${
+                    filterAction === action
+                      ? 'bg-primary-500/30 text-primary-300 border border-primary-500/50'
+                      : 'bg-white/5 hover:bg-white/10 border border-white/10'
+                  }`}
+                >
+                  {action.charAt(0).toUpperCase() + action.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Log List */}
-      <div className="glass-card divide-y divide-white/5">
-        {filteredLogs.map((log, idx) => {
-          const config = severityConfig[log.severity] || severityConfig.info
-          const Icon = config.icon
-          return (
-            <motion.div
-              key={log._id}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: idx * 0.03 }}
-              className="p-4 hover:bg-white/5 transition-colors flex items-center gap-4"
-            >
-              <div className={`p-2 rounded-lg ${config.bg}`}>
-                <Icon className={`w-5 h-5 ${config.color}`} />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-3">
-                  <span className="font-medium">{log.action}</span>
-                  <span className="px-2 py-0.5 rounded-full text-xs bg-white/10">{log.category}</span>
-                </div>
-                <p className="text-gray-400 text-sm">{log.actor?.email}</p>
-              </div>
-              <div className="text-gray-400 text-sm">
-                {new Date(log.timestamp).toLocaleString()}
-              </div>
-            </motion.div>
-          )
-        })}
+      {/* Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="glass-card p-4">
+          <p className="text-gray-400 text-sm">Total Logs</p>
+          <p className="text-2xl font-bold mt-1">{filteredLogs.length}</p>
+        </div>
+        <div className="glass-card p-4">
+          <p className="text-gray-400 text-sm">Info</p>
+          <p className="text-2xl font-bold mt-1 text-blue-400">{filteredLogs.filter(l => l.level === 'info').length}</p>
+        </div>
+        <div className="glass-card p-4">
+          <p className="text-gray-400 text-sm">Success</p>
+          <p className="text-2xl font-bold mt-1 text-green-400">{filteredLogs.filter(l => l.level === 'success').length}</p>
+        </div>
+        <div className="glass-card p-4">
+          <p className="text-gray-400 text-sm">Errors</p>
+          <p className="text-2xl font-bold mt-1 text-red-400">{filteredLogs.filter(l => l.level === 'error').length}</p>
+        </div>
       </div>
+
+      {/* Logs Table */}
+      <div className="glass-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="text-left p-4 text-gray-400 font-medium">Timestamp</th>
+                <th className="text-left p-4 text-gray-400 font-medium">Action</th>
+                <th className="text-left p-4 text-gray-400 font-medium">User</th>
+                <th className="text-left p-4 text-gray-400 font-medium">Details</th>
+                <th className="text-left p-4 text-gray-400 font-medium">Level</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredLogs.map((log, idx) => (
+                <motion.tr
+                  key={log.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.03 }}
+                  className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                >
+                  <td className="p-4 text-gray-400 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      {log.timestamp}
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <span className="font-mono text-primary-300">{log.action}</span>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-gray-400" />
+                      {log.user}
+                    </div>
+                  </td>
+                  <td className="p-4 max-w-md truncate">{log.details}</td>
+                  <td className="p-4"><LevelBadge level={log.level} /></td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {filteredLogs.length === 0 && (
+        <div className="glass-card p-12 text-center">
+          <FileText className="w-12 h-12 mx-auto text-gray-500 mb-4" />
+          <p className="text-gray-400">No logs match your filters</p>
+          <button
+            onClick={handleClearFilters}
+            className="mt-4 px-4 py-2 bg-primary-500/20 hover:bg-primary-500/30 border border-primary-500/30 rounded-xl transition-all"
+          >
+            Clear Filters
+          </button>
+        </div>
+      )}
     </div>
   )
 }

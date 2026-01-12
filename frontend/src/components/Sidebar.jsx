@@ -1,19 +1,31 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../App'
-import { LayoutDashboard, CreditCard, Building2, Receipt, FileText, Settings, LogOut, Menu, X, Zap } from 'lucide-react'
+import { LayoutDashboard, CreditCard, Building2, Receipt, FileText, Settings, LogOut, Menu, X, Zap, Send, CheckCircle } from 'lucide-react'
 
-const navItems = [
+// Admin navigation items
+const adminNavItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/approvals', icon: CheckCircle, label: 'Approvals' },
   { to: '/payments', icon: CreditCard, label: 'Payments' },
   { to: '/merchants', icon: Building2, label: 'Merchants' },
   { to: '/settlements', icon: Receipt, label: 'Settlements' },
   { to: '/audit-logs', icon: FileText, label: 'Audit Logs' },
 ]
 
+// Merchant navigation items
+const merchantNavItems = [
+  { to: '/merchant-dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/send-money', icon: Send, label: 'Send Money' },
+  { to: '/payments', icon: CreditCard, label: 'My Payments' },
+]
+
 export default function Sidebar({ isOpen, setIsOpen }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  
+  const isAdmin = user?.role === 'admin'
+  const navItems = isAdmin ? adminNavItems : merchantNavItems
 
   const handleLogout = () => {
     logout()
@@ -39,7 +51,12 @@ export default function Sidebar({ isOpen, setIsOpen }) {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
                 <Zap className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-bold gradient-text">PayFlow</span>
+              <div>
+                <span className="text-xl font-bold gradient-text">PayFlow</span>
+                {!isAdmin && (
+                  <p className="text-xs text-gray-400 font-mono">{user?.merchantId}</p>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -50,6 +67,19 @@ export default function Sidebar({ isOpen, setIsOpen }) {
           {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
+
+      {/* Role Badge */}
+      {isOpen && (
+        <div className="px-4 py-2">
+          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+            isAdmin 
+              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
+              : 'bg-accent-500/20 text-accent-400 border border-accent-500/30'
+          }`}>
+            {isAdmin ? '👑 ADMIN' : '🏢 MERCHANT'}
+          </span>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1">
