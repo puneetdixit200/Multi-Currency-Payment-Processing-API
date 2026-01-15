@@ -3,8 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --glass-bg: rgba(15, 23, 42, 0.8);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(13, 74, 58, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --primary-green: #0d4a3a;
+  --secondary-green: #1a6b52;
+  --accent-green: #22c55e;
+  --light-gray: #e5e7eb;
+  --medium-gray: #9ca3af;
+  --dark-gray: #374151;
 }
 
 * {
@@ -15,20 +21,20 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+  background: linear-gradient(135deg, #0d4a3a 0%, #1a6b52 50%, #0d4a3a 100%);
   min-height: 100vh;
-  color: #e2e8f0;
+  color: #e5e7eb;
   -webkit-font-smoothing: antialiased;
 }
 
 /* Fix dropdown option visibility */
 select option {
-  background-color: #1e293b;
-  color: #e2e8f0;
+  background-color: #0d4a3a;
+  color: #e5e7eb;
   padding: 8px;
 }
 
-/* Glassmorphism utilities */
+/* Glassmorphism utilities - Green theme */
 .glass {
   background: var(--glass-bg);
   backdrop-filter: blur(12px);
@@ -37,33 +43,33 @@ select option {
 }
 
 .glass-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+  background: linear-gradient(135deg, rgba(26, 107, 82, 0.8) 0%, rgba(13, 74, 58, 0.9) 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
 }
 
 .glass-hover:hover {
-  background: rgba(30, 41, 59, 0.9);
-  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(26, 107, 82, 0.9);
+  border-color: rgba(34, 197, 94, 0.4);
   transform: translateY(-2px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
-/* Gradient text */
+/* Gradient text - Green theme */
 .gradient-text {
-  background: linear-gradient(135deg, #818cf8 0%, #34d399 100%);
+  background: linear-gradient(135deg, #22c55e 0%, #a7f3d0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling - Green theme */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
-::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.5); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.7); }
+::-webkit-scrollbar-track { background: rgba(13, 74, 58, 0.5); }
+::-webkit-scrollbar-thumb { background: rgba(34, 197, 94, 0.5); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(34, 197, 94, 0.7); }
 
 /* Animations */
 @keyframes shimmer {
@@ -94,8 +100,8 @@ select option {
 }
 
 /* Currency rate colors */
-.rate-up { color: #34d399; }
-.rate-down { color: #f87171; }
+.rate-up { color: #22c55e; }
+.rate-down { color: #ef4444; }
 
 /* Status indicators */
 .status-dot {
@@ -110,6 +116,6 @@ select option {
   50% { opacity: 0.7; transform: scale(1.1); }
 }
 
-.status-active { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.5); }
+.status-active { background: #22c55e; box-shadow: 0 0 8px rgba(34, 197, 94, 0.5); }
 .status-pending { background: #fbbf24; box-shadow: 0 0 8px rgba(251, 191, 36, 0.5); }
-.status-failed { background: #f87171; box-shadow: 0 0 8px rgba(248, 113, 113, 0.5); }
+.status-failed { background: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.5); }
